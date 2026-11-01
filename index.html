@@ -20,10 +20,10 @@ button{cursor:pointer;font-weight:600}button.primary{background:var(--blue);colo
 .status.ok{background:#e7f7ef;color:#13744e}.status.err{background:#fff0ed;color:#a43e2d}
 .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
 .dayname{text-align:center;color:var(--muted);font-size:11px;padding:6px 0;font-weight:700}
-.day{min-height:94px;border:1px solid var(--line);border-radius:10px;padding:6px 4px;background:#fff;min-width:0}
+.day{min-height:66px;border:1px solid var(--line);border-radius:10px;padding:5px 4px;background:#fff;min-width:0}
 .day.empty{background:transparent;border:0}.day.today{border:2px solid var(--blue)}
 .daynum{font-size:12px;font-weight:750;margin-bottom:5px}
-.pill{display:block;width:100%;padding:4px 2px;margin:3px 0;border:0;border-radius:6px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{display:block;width:100%;padding:4px 2px;margin:3px 0;border:0;border-radius:6px;font-size:10px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.emptyhint{text-align:center;color:#a0a8b5;font-size:17px;padding-top:7px}
 .pill.tartines{background:#fff3d9;color:#8b5600}.pill.chaud{background:#e7f6ef;color:#126b48}.pill.absent{background:#eef0f4;color:#657084}
 .day button{padding:3px 2px;font-size:10px}
 .entry{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
@@ -40,7 +40,7 @@ h2{font-size:17px;margin:0 0 10px}
 .count:last-child{border:0}
 #loginPanel{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 input[type=date]{padding:9px;border:1px solid var(--line);border-radius:10px;font:inherit}
-@media(max-width:480px){main{padding:10px}.card{padding:12px}.day{min-height:83px}.pill{font-size:9px}.summary{grid-template-columns:1fr 1fr}.entry{gap:7px}}
+@media(max-width:480px){main{padding:10px}.card{padding:12px}.day{min-height:62px}.pill{font-size:9px;padding:3px 1px}.summary{grid-template-columns:1fr 1fr}.entry{gap:7px}}
 </style>
 </head>
 <body>
@@ -183,7 +183,13 @@ function renderCalendar(){
     const date=`${viewYear}-${String(viewMonth+1).padStart(2,"0")}-${String(n).padStart(2,"0")}`;
     const rec=records[date]||{};let cell=document.createElement("div");cell.className="day"+(date===isoDate(today)?" today":"");
     let num=document.createElement("div");num.className="daynum";num.textContent=n;cell.appendChild(num);
-    ["enzo","lena"].forEach(p=>{let b=document.createElement("button");b.className="pill "+(rec[p]||"").toLowerCase();b.textContent=(p==="enzo"?"E ":"L ")+(rec[p]?labels[rec[p]]:"＋");b.title=p==="enzo"?"Enzo":"Lena";b.addEventListener("click",()=>chooseDate(date));cell.appendChild(b);});
+    const meals=[rec.enzo,rec.lena].filter(v=>v && v!=="Absent");
+    if(meals.length){
+      const unique=[...new Set(meals)];
+      unique.forEach(type=>{let tag=document.createElement("div");tag.className="pill "+type.toLowerCase();tag.textContent=type==="Tartines"?"🥪 Tartines":"🍽️ Chaud";cell.appendChild(tag);});
+    } else {
+      let hint=document.createElement("div");hint.className="emptyhint";hint.textContent="＋";cell.appendChild(hint);
+    }
     cell.addEventListener("click",()=>chooseDate(date));cal.appendChild(cell);
   }
 }
