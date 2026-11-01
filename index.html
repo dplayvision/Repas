@@ -245,7 +245,25 @@ $("downloadBtn").onclick=()=>{
     ctx.fillStyle="#172033";ctx.font="bold 32px Arial";ctx.fillText(String(count(person.p,"Chaud")),person.x+360,445);
   });
   ctx.fillStyle="#687386";ctx.font="20px Arial";ctx.fillText("Repas Enzo & Lena",70,600);
-  const a=document.createElement("a");a.download=`synthese-repas-${monthKey()}.png`;a.href=canvas.toDataURL("image/png");a.click();
+  canvas.toBlob(async blob=>{
+    if(!blob){alert("Impossible de créer l'image.");return;}
+    const file=new File([blob],`synthese-repas-${monthKey()}.png`,{type:"image/png"});
+    // Sur iPhone, ouvrir la feuille de partage pour permettre
+    // de choisir « Enregistrer l’image » afin de l'ajouter à Photos.
+    try{
+      if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:"Synthèse des repas"});
+      }else{
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement("a");a.href=url;a.download=file.name;
+        document.body.appendChild(a);a.click();a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),1500);
+        alert("Image téléchargée. Ouvre-la puis utilise Partager > Enregistrer l’image pour l’ajouter à Photos.");
+      }
+    }catch(e){
+      if(e.name!=="AbortError"){console.error(e);alert("Partage impossible. Réessaie ou enregistre l’image depuis le téléchargement.");}
+    }
+  },"image/png");
 };
 makeChoices("enzoChoices","enzo");makeChoices("lenaChoices","lena");
 loadLocal();chooseDate(selectedDate);initFirebase();renderAll();
