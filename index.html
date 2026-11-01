@@ -116,6 +116,8 @@ let viewYear=today.getFullYear(), viewMonth=today.getMonth();
 let selectedDate=isoDate(today), selected={enzo:"",lena:""};
 let records={};
 let auth=null, db=null, currentUser=null, firebaseReady=false, saveTimer=null;
+// Identifiant du propriétaire du calendrier partagé : ton compte Google.
+const SHARED_OWNER_UID = "pLAvsCmVU1e8SXjy77nNR5DnmpN2";
 
 function isoDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 function monthKey(){return `${viewYear}-${String(viewMonth+1).padStart(2,"0")}`;}
@@ -140,14 +142,14 @@ function initFirebase(){
 async function pullCloud(){
   if(!currentUser||!db)return;
   try{
-    const snap=await db.collection("users").doc(currentUser.uid).collection("repas").get();
+    const snap=await db.collection("users").doc(SHARED_OWNER_UID).collection("repas").get();
     records={};snap.forEach(doc=>records[doc.id]=doc.data());
     saveLocal();renderAll();setStatus("Synchronisé avec Google","ok");
   }catch(e){console.error(e);setStatus("Erreur de synchronisation","err");}
 }
 async function cloudSave(date,data){
   if(!currentUser||!db)return;
-  await db.collection("users").doc(currentUser.uid).collection("repas").doc(date).set(data);
+  await db.collection("users").doc(SHARED_OWNER_UID).collection("repas").doc(date).set(data);
 }
 function makeChoices(id,person){
   const wrap=$(id);wrap.innerHTML="";
@@ -222,7 +224,7 @@ function monthKeyFor(date){return date.slice(0,7);}
 $("clearBtn").onclick=async()=>{
   if(!confirm("Effacer les repas de cette journée ?"))return;
   delete records[selectedDate];saveLocal();selected={enzo:"",lena:""};renderAll();$("dayStatus").textContent="Effacé";
-  if(currentUser){try{await db.collection("users").doc(currentUser.uid).collection("repas").doc(selectedDate).delete();setStatus("Suppression synchronisée","ok");}catch(e){setStatus("Erreur de synchronisation","err");}}
+  if(currentUser){try{await db.collection("users").doc(SHARED_OWNER_UID).collection("repas").doc(selectedDate).delete();setStatus("Suppression synchronisée","ok");}catch(e){setStatus("Erreur de synchronisation","err");}}
 };
 $("loginBtn").onclick=async()=>{
   if(!firebaseReady){alert("Complète d'abord la configuration Firebase dans le code, puis active Google dans Firebase Authentication.");return;}
