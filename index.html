@@ -22,6 +22,8 @@ button{cursor:pointer;font-weight:600}button.primary{background:var(--blue);colo
 .dayname{text-align:center;color:var(--muted);font-size:11px;padding:6px 0;font-weight:700}
 .day{min-height:66px;border:1px solid var(--line);border-radius:10px;padding:5px 4px;background:#fff;min-width:0}
 .day.empty{background:transparent;border:0}.day.today{border:2px solid var(--blue)}
+.day.school-holiday{background:#dceaff;border-color:#8db5f5}
+.holiday-mark{font-size:9px;line-height:1.15;color:#89530a;text-align:center;margin-top:4px;white-space:normal}
 .daynum{font-size:12px;font-weight:750;margin-bottom:5px}
 .pill{display:block;width:100%;padding:4px 2px;margin:3px 0;border:0;border-radius:6px;font-size:10px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.emptyhint{text-align:center;color:#a0a8b5;font-size:17px;padding-top:7px}
 .pill.tartines{background:#fff3d9;color:#8b5600}.pill.chaud{background:#e7f6ef;color:#126b48}.pill.absent{background:#eef0f4;color:#657084}
@@ -69,7 +71,7 @@ input[type=date]{padding:9px;border:1px solid var(--line);border-radius:10px;fon
       <select id="yearSelect" aria-label="Année"></select>
     </div>
     <div class="grid" id="calendar" style="margin-top:12px"></div>
-    <p class="small" style="margin-top:9px">Appuie sur une journée pour encoder ou modifier les repas.</p>
+    <p class="small" style="margin-top:9px">🟦 Congés scolaires (FWB) en couleur. Appuie sur une journée pour encoder ou modifier les repas.</p>
   </section>
 
   <section class="card" id="editor">
@@ -174,6 +176,22 @@ function chooseDate(date){
   $("dayStatus").textContent=rec.enzo||rec.lena?"Enregistré":"À encoder";
   renderAll();
 }
+// Congés scolaires de la Fédération Wallonie-Bruxelles 2026-2027.
+const schoolBreaks = [
+  {start:"2026-10-19",end:"2026-11-01",name:"Toussaint"},
+  {start:"2026-11-02",end:"2026-11-02",name:"Fête des morts"},
+  {start:"2026-11-11",end:"2026-11-11",name:"Armistice"},
+  {start:"2026-12-21",end:"2027-01-03",name:"Noël"},
+  {start:"2027-02-09",end:"2027-02-09",name:"Mardi gras"},
+  {start:"2027-02-22",end:"2027-03-07",name:"Carnaval"},
+  {start:"2027-03-29",end:"2027-03-29",name:"Lundi de Pâques"},
+  {start:"2027-04-26",end:"2027-05-09",name:"Printemps"},
+  {start:"2027-05-17",end:"2027-05-17",name:"Pentecôte"},
+  {start:"2027-07-03",end:"2027-08-29",name:"Vacances d'été"}
+];
+function schoolHoliday(date){
+  return schoolBreaks.find(b=>date>=b.start && date<=b.end);
+}
 function renderCalendar(){
   $("monthTitle").textContent=new Date(viewYear,viewMonth,1).toLocaleDateString("fr-BE",{month:"long",year:"numeric"});
   const ys=$("yearSelect");if(![...ys.options].some(o=>Number(o.value)===viewYear)){ys.innerHTML="";for(let y=today.getFullYear()-3;y<=today.getFullYear()+5;y++){let o=document.createElement("option");o.value=y;o.textContent=y;ys.appendChild(o);}}ys.value=viewYear;
@@ -183,8 +201,9 @@ function renderCalendar(){
   for(let i=0;i<offset;i++){let e=document.createElement("div");e.className="day empty";cal.appendChild(e);}
   for(let n=1;n<=days;n++){
     const date=`${viewYear}-${String(viewMonth+1).padStart(2,"0")}-${String(n).padStart(2,"0")}`;
-    const rec=records[date]||{};let cell=document.createElement("div");cell.className="day"+(date===isoDate(today)?" today":"");
+    const rec=records[date]||{};const holiday=schoolHoliday(date);let cell=document.createElement("div");cell.className="day"+(date===isoDate(today)?" today":"")+(holiday?" school-holiday":"");
     let num=document.createElement("div");num.className="daynum";num.textContent=n;cell.appendChild(num);
+    if(holiday){let mark=document.createElement("div");mark.className="holiday-mark";mark.textContent=holiday.name;cell.appendChild(mark);}
     const meals=[rec.enzo,rec.lena].filter(v=>v && v!=="Absent");
     if(meals.length){
       const unique=[...new Set(meals)];
